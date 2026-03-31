@@ -2,6 +2,8 @@ import streamlit as st
 import joblib
 import numpy as np
 import pandas as pd
+import warnings
+warnings.filterwarnings('ignore')
 
 # Load the pre-trained model (XGBoost pipeline)
 @st.cache_resource
