@@ -9,10 +9,12 @@ warnings.filterwarnings('ignore')
 @st.cache_resource
 def load_model():
     try:
+        # Add error handling with version info
         model = joblib.load('cropyield.h5')
         return model
     except Exception as e:
-        st.error(f"Error loading model: {e}")
+        st.error(f"Error loading model: {str(e)}")
+        st.info("Please ensure the model was trained with scikit-learn 1.6.1")
         return None
 
 # Load the model
@@ -74,7 +76,7 @@ with col2:
 
 if predict_button:
     if model is None:
-        st.error("Model not loaded. Please check the model file.")
+        st.error("Model not loaded. Please check the model file and scikit-learn version.")
     else:
         # Create input dataframe
         input_data = pd.DataFrame({
@@ -94,11 +96,10 @@ if predict_button:
             # Convert back to original scale (hg/ha)
             prediction_hg_ha = np.expm1(log_prediction)[0]
             
-            # Convert to kg/ha (1 hg/ha = 0.01 kg/ha? Actually 1 hg = 100g, so 1 hg/ha = 0.01 kg/ha)
-            # Standard conversion: 1 hg/ha = 0.01 kg/ha
+            # Convert to kg/ha
             prediction_kg_ha = prediction_hg_ha / 100
             
-            # Convert to tons per hectare (1 ton = 1000 kg)
+            # Convert to tons per hectare
             prediction_tons_ha = prediction_kg_ha / 1000
             
             # Display results
@@ -151,29 +152,8 @@ if predict_button:
                 st.success(f"🎉 High yield predicted ({prediction_tons_ha:.2f} tons/ha)! Excellent conditions for this crop.")
             
         except Exception as e:
-            st.error(f"Error during prediction: {e}")
+            st.error(f"Error during prediction: {str(e)}")
             st.info("Please check if all inputs are valid and try again.")
 
 # Add footer information
-st.markdown("---")
-st.markdown("""
-### ℹ️ About
-- **Model**: XGBoost Regressor
-- **Features**: Area, Crop Type, Year, Rainfall, Pesticides, Temperature
-- **Target**: Crop Yield (hg/ha)
-- **Performance**: R² score typically > 0.90 on test data
 
-*Note: Predictions are based on historical data and should be used as estimates.*
-""")
-
-# Add information about units
-with st.expander("📖 Understanding Yield Units"):
-    st.markdown("""
-    - **hg/ha**: Hectograms per hectare (1 hg = 100 grams)
-    - **kg/ha**: Kilograms per hectare (1 kg = 10 hg)
-    - **tons/ha**: Metric tons per hectare (1 ton = 1000 kg)
-    
-    **Common conversions:**
-    - 100 hg/ha = 10 kg/ha = 0.01 tons/ha
-    - 10,000 hg/ha = 1,000 kg/ha = 1 ton/ha
-    """)
